@@ -1,0 +1,76 @@
+LAMMPS (7 Dec 2018)
+# 3d Lennard-Jones crysatal melting layer by layer
+units		lj
+# dimension  3
+atom_style	atomic
+
+lattice     fcc 0.8 orient x 1 1 1 orient y 1 -1 0 orient z 1 1 -2
+Lattice spacing in x,y,z = 2.96177 2.41827 2.79238
+region		box block 0 6 0 30 0 31 # mismatch in z leads to layer by layer melting
+create_box	1 box
+Created orthogonal box = (0 0 0) to (17.7706 72.5481 86.5637)
+  1 by 2 by 2 MPI processor grid
+create_atoms	1 box
+Created 89280 atoms
+  Time spent = 0.014846 secs
+mass		1 1.0
+
+velocity	all create 0.1 87287 loop geom
+
+pair_style	lj/cut 2.5
+pair_coeff	1 1 1.0 1.0 2.5
+
+neighbor	0.3 bin
+neigh_modify    delay 5 every 1
+
+
+dump    1   all atom 10 dump.atom
+
+# minimize 1e-2 1e-2 2    2
+fix		1 all nvt temp 1.2 1.2 1
+# fix 2 all enforce2d
+
+run		100
+Neighbor list info ...
+  update every 1 steps, delay 5 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 2.8
+  ghost atom cutoff = 2.8
+  binsize = 1.4, bins = 13 52 62
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cut, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/3d/newton
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 13.63 | 13.66 | 13.74 Mbytes
+Step Temp E_pair E_mol TotEng Press 
+       0          0.1   -4.2186258            0   -4.0686275    1.1391094 
+     100   0.88969717   -5.6797469            0   -4.3452161   -1.5954741 
+Loop time of 4.68767 on 4 procs for 100 steps with 89280 atoms
+
+Performance: 9215.666 tau/day, 21.333 timesteps/s
+98.5% CPU use with 4 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 2.3786     | 2.4162     | 2.4591     |   2.3 | 51.54
+Neigh   | 1.2735     | 1.283      | 1.2928     |   0.8 | 27.37
+Comm    | 0.33326    | 0.38266    | 0.44071    |   7.4 |  8.16
+Output  | 0.40436    | 0.44086    | 0.47336    |   4.0 |  9.40
+Modify  | 0.13575    | 0.13793    | 0.14014    |   0.4 |  2.94
+Other   |            | 0.02693    |            |       |  0.57
+
+Nlocal:    22320 ave 22411 max 22217 min
+Histogram: 1 1 0 0 0 0 0 0 0 2
+Nghost:    14511 ave 14585 max 14427 min
+Histogram: 1 1 0 0 0 0 0 0 0 2
+Neighs:    838349 ave 849584 max 828103 min
+Histogram: 2 0 0 0 0 0 0 0 1 1
+
+Total # of neighbors = 3353396
+Ave neighs/atom = 37.5604
+Neighbor list builds = 20
+Dangerous builds = 20
+Total wall time: 0:00:04
