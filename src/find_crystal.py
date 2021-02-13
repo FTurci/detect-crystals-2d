@@ -10,51 +10,54 @@ from sklearn.mixture import GaussianMixture
 
 
 
-
-# for the experimentsm, try multiple rotations of the kernel
+# for the experiments, try multiple rotations of the kernel
 convolutions = []
 
 data= np.load("../exp-data/0.524squ.npy")
 kernel= np.load("../exp-data/kernel.npy")
 
-nrotations = 12
+nrotations = 7
 nrotations += 1
 dtheta = 360/nrotations
 for i in range(nrotations):
     angle = i*dtheta
     k = ndimage.rotate(kernel,angle)
-
     conv = signal.fftconvolve(data, k, mode='same')
     convolutions.append(conv)
-# plt.pcolormesh(data)
-# plt.colorbar()
-# plt.savefig("input.png")
-# plt.figure()
+
 
 convolutions = np.array(convolutions)
-# print( conv.shape, data.shape)
 
-
+# from every rotation, pick only the largest contribution
 poolmax = convolutions.max(axis=0)
 
+# remove a border of thinkess kernel/2
 b = int(kernel.shape[0]/2)
 without_border = poolmax[b:-b, b:-b]
+# plot the intensiti histogram
+# plt.hist(without_border.ravel(), bins=100)
+# plt.figure()
 
-plt.hist(without_border.ravel(), bins=100)
-plt.figure()
-
+#gaussian mixture model: decompose the intesnity histogram into 3 gaussians: liquid, interface,crystal
 X =np.empty(  (len(without_border.ravel()),1) )
 X[:,0] = without_border.ravel()
-gm = GaussianMixture(n_components=3, random_state=0).fit(X)
-print(gm.means_)
-
+gm = GaussianMixture(n_components=4, random_state=0).fit(X)
+mean = gm.means_
+#  use the model to label the image
 u = gm.predict(X)
-print(u.shape, np.prod(without_border.shape))
-plt.pcolormesh(u.reshape(without_border.shape))
 
+crystal_label_1 = u[X[:,0].argmax()]
+crystal_label_2 = u[u!=crystal_label_1][X[u!=crystal_label_1,0].argmax()]
+crystal_label_3 = u[(u!=crystal_label_1)*(u!=crystal_label_2)][X[(u!=crystal_label_1)*(u!=crystal_label_2),0].argmax()]
 
+labelled = u.reshape(without_border.shape)
+plt.figure(figsize=(6,6))
+plt.pcolormesh(data[b:-b,b:-b], cmap = plt.cm.hot)
 
+plt.contourf((labelled==crystal_label_1)+(labelled==crystal_label_2)+(labelled==crystal_label_3), [.5, 1.5], alpha=0.25)#, alpha=0.03, cmap=plt.cm.binary)
+plt.contour((labelled==crystal_label_1)+(labelled==crystal_label_2)+(labelled==crystal_label_3), [.5], colors="k")
 
-# plt.pcolormesh(poolmax>poolmax.mean()+poolmax.std())#+poolmax.std()*.5)#>conv.max()#alpha=0.5, cmap = plt.cm.bone_r)
+plt.axis('equal')
+plt.xlim(0, without_border.shape[1])
 plt.savefig("output.png")
 plt.show()
