@@ -26,7 +26,7 @@ for angle in np.linspace(0,360,nrotations):
 convolutions = np.array(convolutions)
 
 # from every rotation, pick only the largest contribution
-poolmax = convolutions.sum(axis=0)
+poolmax = convolutions.max(axis=0)
 
 # remove a border of thinkess kernel
 b = int(kernel.shape[0])
